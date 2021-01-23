@@ -18,11 +18,10 @@ public class ReceiverFastImg
             {
                 socket.Connect("tcp://localhost:5555");
 
-                byte[] rawImage;
                 while (running)
                 {
-                    bool success = socket.TryReceiveFrameBytes(out rawImage);
-                    if (success) ((Action<byte[]>)callback)(rawImage);
+                    byte[] rawImage = socket.ReceiveFrameBytes();
+                    ((Action<byte[]>)callback)(rawImage);
                 }
             }
             NetMQConfig.Cleanup();
