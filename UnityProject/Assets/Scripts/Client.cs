@@ -45,7 +45,7 @@ public class Receiver
 
 public class Client : MonoBehaviour
 {
-    private readonly ConcurrentQueue<Action> RunOnMainThread = new ConcurrentQueue<Action>();
+    private readonly ConcurrentQueue<Action> runOnMainThread = new ConcurrentQueue<Action>();
     private Receiver receiver;
     private Texture2D tex;
     public RawImage image;
@@ -56,7 +56,7 @@ public class Client : MonoBehaviour
         image.texture = tex;
 
         receiver = new Receiver();
-        receiver.Start((Data d) => RunOnMainThread.Enqueue(() =>
+        receiver.Start((Data d) => runOnMainThread.Enqueue(() =>
             {
                 Debug.Log(d.str);
                 tex.LoadImage(d.image);
@@ -66,10 +66,10 @@ public class Client : MonoBehaviour
 
     public void Update()
     {
-        if (!RunOnMainThread.IsEmpty)
+        if (!runOnMainThread.IsEmpty)
         {
             Action action;
-            while (RunOnMainThread.TryDequeue(out action))
+            while (runOnMainThread.TryDequeue(out action))
             {
                 action.Invoke();
             }

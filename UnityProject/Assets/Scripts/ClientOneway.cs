@@ -44,7 +44,7 @@ public class ReceiverOneway
 
 public class ClientOneway : MonoBehaviour
 {
-    private readonly ConcurrentQueue<Action> RunOnMainThread = new ConcurrentQueue<Action>();
+    private readonly ConcurrentQueue<Action> runOnMainThread = new ConcurrentQueue<Action>();
     private ReceiverOneway receiver;
     private Texture2D tex;
     public RawImage image;
@@ -55,7 +55,7 @@ public class ClientOneway : MonoBehaviour
         image.texture = tex;
 
         receiver = new ReceiverOneway();
-        receiver.Start((Data d) => RunOnMainThread.Enqueue(() =>
+        receiver.Start((Data d) => runOnMainThread.Enqueue(() =>
             {
                 Debug.Log(d.str);
                 tex.LoadImage(d.image);
@@ -65,10 +65,10 @@ public class ClientOneway : MonoBehaviour
 
     public void Update()
     {
-        if (!RunOnMainThread.IsEmpty)
+        if (!runOnMainThread.IsEmpty)
         {
             Action action;
-            while (RunOnMainThread.TryDequeue(out action))
+            while (runOnMainThread.TryDequeue(out action))
             {
                 action.Invoke();
             }

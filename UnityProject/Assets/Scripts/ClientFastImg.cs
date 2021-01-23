@@ -44,7 +44,7 @@ public class ReceiverFastImg
 
 public class ClientFastImg : MonoBehaviour
 {
-    private readonly ConcurrentQueue<Action> RunOnMainThread = new ConcurrentQueue<Action>();
+    private readonly ConcurrentQueue<Action> runOnMainThread = new ConcurrentQueue<Action>();
     private ReceiverFastImg receiver;
     private Texture2D tex;
     public RawImage image;
@@ -55,7 +55,7 @@ public class ClientFastImg : MonoBehaviour
         image.texture = tex;
 
         receiver = new ReceiverFastImg();
-        receiver.Start((byte[] rawImage) => RunOnMainThread.Enqueue(() =>
+        receiver.Start((byte[] rawImage) => runOnMainThread.Enqueue(() =>
             {
                 tex.LoadRawTextureData(rawImage);
                 tex.Apply(updateMipmaps: false);
@@ -65,10 +65,10 @@ public class ClientFastImg : MonoBehaviour
 
     public void Update()
     {
-        if (!RunOnMainThread.IsEmpty)
+        if (!runOnMainThread.IsEmpty)
         {
             Action action;
-            while (RunOnMainThread.TryDequeue(out action))
+            while (runOnMainThread.TryDequeue(out action))
             {
                 action.Invoke();
             }
