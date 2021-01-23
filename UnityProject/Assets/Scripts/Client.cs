@@ -13,7 +13,21 @@ public class Receiver
 
     public Receiver()
     {
-        receiveThread = new Thread(Run);
+        receiveThread = new Thread((object callback) => {
+            using (var socket = new RequestSocket())
+            {
+                socket.Connect("tcp://localhost:5555");
+
+                while (running)
+                {
+                    socket.SendFrameEmpty();
+                    string message = socket.ReceiveFrameString();
+                    Data data = JsonUtility.FromJson<Data>(message);
+                    ((Action<Data>)callback)(data);
+                }
+            }
+            NetMQConfig.Cleanup();
+        });
     }
 
     public void Start(Action<Data> callback)
@@ -27,28 +41,11 @@ public class Receiver
         running = false;
         receiveThread.Join();
     }
-
-    void Run(object callback)
-    {
-        using (var socket = new RequestSocket())
-        {
-            socket.Connect("tcp://localhost:5555");
-
-            while (running)
-            {
-                socket.SendFrameEmpty();
-                string message = socket.ReceiveFrameString();
-                Data data = JsonUtility.FromJson<Data>(message);
-                ((Action<Data>)callback)(data);
-            }
-        }
-        NetMQConfig.Cleanup();
-    }
 }
 
 public class Client : MonoBehaviour
 {
-    public readonly ConcurrentQueue<Action> RunOnMainThread = new ConcurrentQueue<Action>();
+    private readonly ConcurrentQueue<Action> RunOnMainThread = new ConcurrentQueue<Action>();
     private Receiver receiver;
     private Texture2D tex;
     public RawImage image;

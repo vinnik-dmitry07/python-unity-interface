@@ -13,7 +13,20 @@ public class ReceiverOneway
 
     public ReceiverOneway()
     {
-        receiveThread = new Thread(Run);
+        receiveThread = new Thread((object callback) => {
+            using (var socket = new PullSocket())
+            {
+                socket.Connect("tcp://localhost:5555");
+
+                while (running)
+                {
+                    string message = socket.ReceiveFrameString();
+                    Data data = JsonUtility.FromJson<Data>(message);
+                    ((Action<Data>)callback)(data);
+                }
+            }
+            NetMQConfig.Cleanup();
+        });
     }
 
     public void Start(Action<Data> callback)
@@ -27,27 +40,11 @@ public class ReceiverOneway
         running = false;
         receiveThread.Join();
     }
-
-    void Run(object callback)
-    {
-        using (var socket = new PullSocket())
-        {
-            socket.Connect("tcp://localhost:5555");
-
-            while (running)
-            {
-                string message = socket.ReceiveFrameString();
-                Data data = JsonUtility.FromJson<Data>(message);
-                ((Action<Data>)callback)(data);
-            }
-        }
-        NetMQConfig.Cleanup();
-    }
 }
 
 public class ClientOneway : MonoBehaviour
 {
-    public readonly ConcurrentQueue<Action> RunOnMainThread = new ConcurrentQueue<Action>();
+    private readonly ConcurrentQueue<Action> RunOnMainThread = new ConcurrentQueue<Action>();
     private ReceiverOneway receiver;
     private Texture2D tex;
     public RawImage image;
@@ -62,7 +59,7 @@ public class ClientOneway : MonoBehaviour
             {
                 Debug.Log(d.str);
                 tex.LoadImage(d.image);
-            }
+            }   
         ));
     }
 

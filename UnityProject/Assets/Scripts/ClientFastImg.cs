@@ -13,7 +13,20 @@ public class ReceiverFastImg
 
     public ReceiverFastImg()
     {
-        receiveThread = new Thread(Run);
+        receiveThread = new Thread((object callback) => {
+            using (var socket = new PullSocket())
+            {
+                socket.Connect("tcp://localhost:5555");
+
+                byte[] rawImage;
+                while (running)
+                {
+                    bool success = socket.TryReceiveFrameBytes(out rawImage);
+                    if (success) ((Action<byte[]>)callback)(rawImage);
+                }
+            }
+            NetMQConfig.Cleanup();
+        });
     }
 
     public void Start(Action<byte[]> callback)
@@ -27,27 +40,11 @@ public class ReceiverFastImg
         running = false;
         receiveThread.Join();
     }
-
-    void Run(object callback)
-    {
-        using (var socket = new PullSocket())
-        {
-            socket.Connect("tcp://localhost:5555");
-
-            byte[] rawImage;
-            while (running)
-            {
-                bool success = socket.TryReceiveFrameBytes(out rawImage);
-                if (success) ((Action<byte[]>)callback)(rawImage);
-            }
-        }
-        NetMQConfig.Cleanup();
-    }
 }
 
 public class ClientFastImg : MonoBehaviour
 {
-    public readonly ConcurrentQueue<Action> RunOnMainThread = new ConcurrentQueue<Action>();
+    private readonly ConcurrentQueue<Action> RunOnMainThread = new ConcurrentQueue<Action>();
     private ReceiverFastImg receiver;
     private Texture2D tex;
     public RawImage image;
