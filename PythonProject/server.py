@@ -1,4 +1,4 @@
-# pip install zmq opencv-python
+# pip install pyzmq opencv-python
 
 import cv2
 import zmq
