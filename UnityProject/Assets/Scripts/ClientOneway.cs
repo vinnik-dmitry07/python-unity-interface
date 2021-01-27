@@ -14,6 +14,7 @@ public class ReceiverOneway
     public ReceiverOneway()
     {
         receiveThread = new Thread((object callback) => {
+			ForceDotNet.Force();
             using (var socket = new PullSocket())
             {
                 socket.Connect("tcp://localhost:5555");

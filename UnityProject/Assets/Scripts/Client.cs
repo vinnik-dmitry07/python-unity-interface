@@ -14,6 +14,7 @@ public class Receiver
     public Receiver()
     {
         receiveThread = new Thread((object callback) => {
+			ForceDotNet.Force();
             using (var socket = new RequestSocket())
             {
                 socket.Connect("tcp://localhost:5555");
