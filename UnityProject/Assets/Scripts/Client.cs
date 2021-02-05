@@ -1,4 +1,5 @@
-﻿using NetMQ;
+﻿using AsyncIO;
+using NetMQ;
 using NetMQ.Sockets;
 using System;
 using System.Collections.Concurrent;
@@ -13,8 +14,8 @@ public class Receiver
 
     public Receiver()
     {
-        receiveThread = new Thread((object callback) => {
-			ForceDotNet.Force();
+        receiveThread = new Thread((object callback) => 
+        {
             using (var socket = new RequestSocket())
             {
                 socket.Connect("tcp://localhost:5555");
@@ -27,7 +28,6 @@ public class Receiver
                     ((Action<Data>)callback)(data);
                 }
             }
-            NetMQConfig.Cleanup();
         });
     }
 
@@ -56,6 +56,7 @@ public class Client : MonoBehaviour
         tex = new Texture2D(2, 2, TextureFormat.RGB24, mipChain: false);
         image.texture = tex;
 
+        ForceDotNet.Force();  // If you have multiple sockets in the following threads
         receiver = new Receiver();
         receiver.Start((Data d) => runOnMainThread.Enqueue(() =>
             {
@@ -80,5 +81,6 @@ public class Client : MonoBehaviour
     private void OnDestroy()
     {
         receiver.Stop();
+        NetMQConfig.Cleanup();
     }
 }

@@ -1,4 +1,5 @@
-﻿using NetMQ;
+﻿using AsyncIO;
+using NetMQ;
 using NetMQ.Sockets;
 using System;
 using System.Collections.Concurrent;
@@ -13,8 +14,8 @@ public class ReceiverOneway
 
     public ReceiverOneway()
     {
-        receiveThread = new Thread((object callback) => {
-			ForceDotNet.Force();
+        receiveThread = new Thread((object callback) =>
+        {
             using (var socket = new PullSocket())
             {
                 socket.Connect("tcp://localhost:5555");
@@ -26,7 +27,6 @@ public class ReceiverOneway
                     ((Action<Data>)callback)(data);
                 }
             }
-            NetMQConfig.Cleanup();
         });
     }
 
@@ -55,12 +55,13 @@ public class ClientOneway : MonoBehaviour
         tex = new Texture2D(2, 2, TextureFormat.RGB24, mipChain: false);
         image.texture = tex;
 
+        ForceDotNet.Force();
         receiver = new ReceiverOneway();
         receiver.Start((Data d) => runOnMainThread.Enqueue(() =>
             {
                 Debug.Log(d.str);
                 tex.LoadImage(d.image);
-            }   
+            }
         ));
     }
 
@@ -79,5 +80,6 @@ public class ClientOneway : MonoBehaviour
     private void OnDestroy()
     {
         receiver.Stop();
+        NetMQConfig.Cleanup();
     }
 }

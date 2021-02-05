@@ -1,4 +1,5 @@
-﻿using NetMQ;
+﻿using AsyncIO;
+using NetMQ;
 using NetMQ.Sockets;
 using System;
 using System.Collections.Concurrent;
@@ -13,8 +14,8 @@ public class ReceiverFastImg
 
     public ReceiverFastImg()
     {
-        receiveThread = new Thread((object callback) => {
-			ForceDotNet.Force();
+        receiveThread = new Thread((object callback) =>
+        {
             using (var socket = new PullSocket())
             {
                 socket.Connect("tcp://localhost:5555");
@@ -25,7 +26,6 @@ public class ReceiverFastImg
                     ((Action<byte[]>)callback)(rawImage);
                 }
             }
-            NetMQConfig.Cleanup();
         });
     }
 
@@ -54,6 +54,7 @@ public class ClientFastImg : MonoBehaviour
         tex = new Texture2D(960, 720, TextureFormat.RGB24, mipChain: false);
         image.texture = tex;
 
+        ForceDotNet.Force();
         receiver = new ReceiverFastImg();
         receiver.Start((byte[] rawImage) => runOnMainThread.Enqueue(() =>
             {
@@ -78,5 +79,6 @@ public class ClientFastImg : MonoBehaviour
     private void OnDestroy()
     {
         receiver.Stop();
+        NetMQConfig.Cleanup();
     }
 }
